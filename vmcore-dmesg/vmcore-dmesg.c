@@ -35,10 +35,10 @@ static loff_t logged_chars_vaddr;
 static loff_t log_first_idx_vaddr;
 static loff_t log_next_idx_vaddr;
 
-/* struct log size */
+/* struct printk_log (or older log) size */
 static uint64_t log_sz;
 
-/* struct log field offsets */
+/* struct printk_log (or older log) field offsets */
 static uint64_t log_offset_ts_nsec = UINT64_MAX;
 static uint16_t log_offset_len = UINT16_MAX;
 static uint16_t log_offset_text_len = UINT16_MAX;
@@ -325,19 +325,25 @@ static void scan_vmcoreinfo(char *start, size_t size)
 			*symbol[i].vaddr = vaddr;
 		}
 
-		/* Check for "SIZE(log)=" */
+		/* Check for "SIZE(printk_log)" or older "SIZE(log)=" */
 		if (memcmp("SIZE(log)=", pos, 10) == 0)
 			log_sz = strtoull(pos + 10, NULL, 10);
+		if (memcmp("SIZE(printk_log)=", pos, 17) == 0)
+			log_sz = strtoull(pos + 17, NULL, 10);
 
-		/* Check for struct log field offsets */
+		/* Check for struct printk_log (or older log) field offsets */
 		if (memcmp("OFFSET(log.ts_nsec)=", pos, 20) == 0)
 			log_offset_ts_nsec = strtoull(pos + 20, NULL, 10);
+		if (memcmp("OFFSET(printk_log.ts_nsec)=", pos, 27) == 0)
+			log_offset_ts_nsec = strtoull(pos + 27, NULL, 10);
 
 		if (memcmp("OFFSET(log.len)=", pos, 16) == 0)
 			log_offset_len = strtoul(pos + 16, NULL, 10);
+		if (memcmp("OFFSET(printk_log.len)=", pos, 23) == 0)
+			log_offset_len = strtoul(pos + 23, NULL, 10);
 
-		if (memcmp("OFFSET(log.text_len)=", pos, 21) == 0)
-			log_offset_text_len = strtoul(pos + 21, NULL, 10);
+		if (memcmp("OFFSET(printk_log.text_len)=", pos, 28) == 0)
+			log_offset_text_len = strtoul(pos + 28, NULL, 10);
 
 		if (last_line)
 			break;
